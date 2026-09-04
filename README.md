@@ -9,7 +9,9 @@ Turn hours of audio into text you can read in minutes. Perfect for lectures, mee
 ## ✨ Features
 
 - 🎵 **Audio to text transcription** — supports `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.webm`, `.wma`, `.aac`
-- ⏱️ **Timestamps per segment** — each paragraph is marked with time `[00:15:30]` for easy navigation
+- 📝 **Paragraph mode** — merges fragmented segments into coherent paragraphs based on speech pauses
+- 🧠 **AI topic segmentation** — automatically groups transcript by topics using Google Gemini AI (free)
+- ⏱️ **Timestamps** — each paragraph is marked with time range `[00:15:30 - 00:18:45]`
 - 🤖 **Multiple model choices** — from `tiny` (fastest) to `large-v3` (most accurate)
 - 📄 **Dual output formats** — `.txt` (clean text + timestamps) and `.srt` (subtitle format)
 - 🌐 **Auto language detection** — supports multilingual & code-switching (e.g., mixing languages)
@@ -191,6 +193,46 @@ python transcribe.py "Meeting Recording.m4a" --model medium --language en --form
 ```bash
 python transcribe.py audio.m4a -m medium -l en -f txt srt -o ./transcripts
 ```
+
+### Paragraph Mode (Default)
+
+By default, the tool merges fragmented Whisper segments into coherent paragraphs based on speech pauses:
+
+```bash
+# Default behavior (paragraph mode ON)
+python transcribe.py audio.m4a
+
+# Adjust pause gap threshold (default: 1.5 seconds)
+# Higher value = longer paragraphs
+python transcribe.py audio.m4a --gap 2.0
+
+# Disable paragraph mode (use original per-segment output)
+python transcribe.py audio.m4a --no-paragraph
+```
+
+### AI Topic Segmentation
+
+Automatically group your transcript by topics using Google Gemini AI (free):
+
+```bash
+# Enable topic segmentation
+python transcribe.py audio.m4a --topics
+
+# With API key directly
+python transcribe.py audio.m4a --topics --api-key AIzaSy...
+
+# Or set environment variable (recommended)
+# Windows: set GEMINI_API_KEY=AIzaSy...
+# Linux/Mac: export GEMINI_API_KEY=AIzaSy...
+python transcribe.py audio.m4a --topics
+```
+
+> 💡 Get a **free** Gemini API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+>
+> You can also create a `.env` file in the project root:
+> ```
+> GEMINI_API_KEY=your_api_key_here
+> ```
 
 ---
 

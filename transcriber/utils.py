@@ -237,7 +237,7 @@ def print_banner():
     banner = """
 +==================================================+
 |       AUDIO TRANSCRIPTION TOOL                   |
-|       Transkrip Rekaman Kuliah ke Teks           |
+|       Transkrip Rekaman Audio ke Teks            |
 |       Powered by OpenAI Whisper                  |
 +==================================================+
     """

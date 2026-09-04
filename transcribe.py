@@ -1,6 +1,6 @@
 """
 Audio Transcription Tool — CLI Entry Point
-Transkrip rekaman audio kuliah menjadi teks menggunakan OpenAI Whisper.
+Transkrip rekaman audio menjadi teks menggunakan OpenAI Whisper.
 
 Penggunaan:
     python transcribe.py <file_audio> [opsi]
@@ -8,6 +8,7 @@ Penggunaan:
 Contoh:
     python transcribe.py rekaman_kuliah.m4a
     python transcribe.py rekaman.m4a --model medium --language id
+    python transcribe.py rekaman.m4a --topics --api-key AIzaSy...
     python transcribe.py rekaman.m4a --format txt srt --output D:\\Transkrip
 """
 
@@ -43,17 +44,19 @@ def create_parser() -> argparse.ArgumentParser:
     """Buat argument parser untuk CLI."""
     parser = argparse.ArgumentParser(
         prog="transcribe",
-        description="🎙️ Audio Transcription Tool — Transkrip rekaman kuliah ke teks",
+        description="🎙️ Audio Transcription Tool — Transkrip rekaman audio ke teks",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Contoh penggunaan:
   python transcribe.py rekaman_kuliah.m4a
   python transcribe.py rekaman.m4a --model medium
   python transcribe.py rekaman.m4a --model small --language id
+  python transcribe.py rekaman.m4a --topics
+  python transcribe.py rekaman.m4a --no-paragraph
   python transcribe.py rekaman.m4a --format txt srt
   python transcribe.py rekaman.m4a --output D:\\Hasil_Transkrip
 
-Model tersedia (kecil → besar):
+Model tersedia (kecil -> besar):
   tiny      ~75 MB   | Tercepat, akurasi rendah
   base      ~145 MB  | Cepat, akurasi cukup
   small     ~470 MB  | Balance kecepatan & akurasi (default)
@@ -101,6 +104,35 @@ Model tersedia (kecil → besar):
         help="Direktori output. Default: folder 'output' di direktori ini",
     )
 
+    # === Paragraph mode options ===
+    parser.add_argument(
+        "--no-paragraph",
+        action="store_true",
+        help="Nonaktifkan mode paragraf (gunakan mode segmen per baris seperti lama)",
+    )
+
+    parser.add_argument(
+        "--gap",
+        type=float,
+        default=1.5,
+        help="Jeda minimum (detik) untuk memulai paragraf baru (default: 1.5)",
+    )
+
+    # === Topic segmentation options ===
+    parser.add_argument(
+        "--topics", "-t",
+        action="store_true",
+        help="Aktifkan pengelompokan topik otomatis menggunakan Gemini AI",
+    )
+
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        default=None,
+        help="Google Gemini API key. Atau set env variable GEMINI_API_KEY",
+    )
+
+    # === Utility options ===
     parser.add_argument(
         "--list-models",
         action="store_true",
@@ -194,8 +226,15 @@ def main():
         script_dir = os.path.dirname(os.path.abspath(__file__))
         output_dir = ensure_output_dir(os.path.join(script_dir, "output"))
 
+    # Tentukan mode
+    paragraph_mode = not args.no_paragraph
+    mode_label = "paragraf" if paragraph_mode else "segmen"
+    if args.topics:
+        mode_label += " + topik (Gemini AI)"
+
     print(f"📁 Output: {output_dir}")
     print(f"📝 Format: {', '.join(args.format)}")
+    print(f"📋 Mode  : {mode_label}")
 
     # === STEP 4: Transkripsi ===
     print("\n" + "─" * 50)
@@ -212,30 +251,64 @@ def main():
         print(f"\n❌ Error saat transkripsi: {e}")
         sys.exit(1)
 
-    # === STEP 5: Simpan output ===
+    # === STEP 5: Topic analysis (jika diminta) ===
+    topics = None
+    if args.topics:
+        print("\n" + "─" * 50)
+        print("  ANALISIS TOPIK")
+        print("─" * 50)
+
+        try:
+            from transcriber.topic_analyzer import get_api_key, analyze_topics_from_result
+
+            api_key = get_api_key(args.api_key)
+            topics = analyze_topics_from_result(
+                result, api_key, gap_threshold=args.gap
+            )
+        except ValueError as e:
+            print(f"\n❌ {e}")
+            sys.exit(1)
+        except ImportError as e:
+            print(f"\n❌ Library 'google-genai' belum terinstall!")
+            print(f"   Jalankan: pip install google-genai")
+            sys.exit(1)
+        except Exception as e:
+            print(f"\n⚠️  Error saat analisis topik: {e}")
+            print(f"   Melanjutkan tanpa pengelompokan topik...")
+            topics = None
+
+    # === STEP 6: Simpan output ===
     print("\n" + "─" * 50)
     print("  MENYIMPAN HASIL")
     print("─" * 50 + "\n")
 
-    saved_files = save_output(result, output_dir, audio_basename, args.format)
+    saved_files = save_output(
+        result, output_dir, audio_basename, args.format,
+        paragraph_mode=paragraph_mode,
+        gap_threshold=args.gap,
+        topics=topics,
+    )
 
     for f in saved_files:
         print(f"   💾 Disimpan: {f}")
 
-    # === STEP 6: Ringkasan ===
+    # === STEP 7: Ringkasan ===
     word_count = count_words(result["text"])
     reading_time = estimate_reading_time(word_count)
 
-    print("\n" + "═" * 50)
+    print("\n" + "=" * 50)
     print("  ✅ TRANSKRIPSI BERHASIL!")
-    print("═" * 50)
+    print("=" * 50)
     print(f"   Durasi audio     : {format_duration(result['duration'])}")
     print(f"   Waktu proses     : {format_duration(result['processing_time'])}")
     print(f"   Jumlah kata      : {word_count:,} kata")
     print(f"   Estimasi baca    : ~{reading_time} menit")
     print(f"   Model            : {result['model']}")
     print(f"   Device           : {result['device'].upper()}")
-    print("═" * 50)
+    print(f"   Mode output      : {mode_label}")
+    if topics:
+        print(f"   Topik terdeteksi : {len(topics)}")
+    print("=" * 50)
     print()
 
 
