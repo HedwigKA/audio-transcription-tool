@@ -1,191 +1,216 @@
 # 🎙️ Audio Transcription Tool
 
-Transkrip rekaman audio kuliah menjadi teks menggunakan **OpenAI Whisper**.
+Convert audio recordings into readable text transcripts using **OpenAI Whisper** — completely free, offline, and supporting 90+ languages.
 
-Dengan tool ini, kamu bisa mengubah rekaman kuliah 2 jam menjadi teks yang bisa dibaca dalam ~25 menit — jauh lebih efisien daripada mendengarkan ulang seluruh rekaman!
-
----
-
-## 📋 Fitur
-
-- ✅ **Transkripsi audio ke teks** — mendukung `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.webm`, `.wma`, `.aac`
-- ✅ **Timestamp per segmen** — setiap paragraf ditandai waktu `[00:15:30]`
-- ✅ **Pilih model** — dari `tiny` (tercepat) sampai `large-v3` (paling akurat)
-- ✅ **Multi-format output** — `.txt` (teks + timestamp) dan `.srt` (subtitle)
-- ✅ **Auto-detect bahasa** — mendukung bilingual (Indonesia + English)
-- ✅ **GPU accelerated** — otomatis menggunakan NVIDIA GPU jika tersedia
-- ✅ **Ringkasan otomatis** — info durasi, jumlah kata, dan estimasi waktu baca
+Turn hours of audio into text you can read in minutes. Perfect for lectures, meetings, interviews, podcasts, and more.
 
 ---
 
-## 🔧 Instalasi
+## ✨ Features
+
+- 🎵 **Audio to text transcription** — supports `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.webm`, `.wma`, `.aac`
+- ⏱️ **Timestamps per segment** — each paragraph is marked with time `[00:15:30]` for easy navigation
+- 🤖 **Multiple model choices** — from `tiny` (fastest) to `large-v3` (most accurate)
+- 📄 **Dual output formats** — `.txt` (clean text + timestamps) and `.srt` (subtitle format)
+- 🌐 **Auto language detection** — supports multilingual & code-switching (e.g., mixing languages)
+- ⚡ **GPU accelerated** — automatically uses NVIDIA GPU (CUDA) when available, falls back to CPU
+- 📊 **Auto summary** — includes duration, word count, and estimated reading time in output
+
+---
+
+## 📋 Requirements
+
+- **Python** 3.8 or higher
+- **FFmpeg** (required for audio processing)
+- **NVIDIA GPU** (optional, for faster processing via CUDA)
+
+---
+
+## 🔧 Installation
 
 ### 1. Install Python
 
-Pastikan Python 3.8+ sudah terinstall. Cek dengan:
+Make sure Python 3.8+ is installed:
 
-```powershell
+```bash
 python --version
 ```
 
-Jika belum, download di [python.org](https://www.python.org/downloads/) atau install via:
+If not installed, download from [python.org](https://www.python.org/downloads/).
+
+<details>
+<summary>Windows (via winget)</summary>
 
 ```powershell
 winget install Python.Python.3.12
 ```
 
-> ⚠️ **Penting:** Saat install Python, centang ✅ **"Add Python to PATH"**
+> ⚠️ During installation, check ✅ **"Add Python to PATH"**
+
+</details>
 
 ### 2. Install FFmpeg
 
-FFmpeg diperlukan oleh Whisper untuk membaca file audio.
+FFmpeg is required by Whisper to read audio files.
+
+<details>
+<summary>Windows</summary>
 
 ```powershell
 winget install Gyan.FFmpeg
 ```
 
-Setelah install, **tutup dan buka ulang terminal**, lalu verifikasi:
+After installation, **restart your terminal**, then verify:
 
 ```powershell
 ffmpeg -version
 ```
 
-Jika berhasil, akan muncul informasi versi FFmpeg.
+</details>
 
 <details>
-<summary>❓ Alternatif instalasi FFmpeg</summary>
+<summary>macOS</summary>
 
-**Via Chocolatey:**
-```powershell
-choco install ffmpeg
+```bash
+brew install ffmpeg
 ```
-
-**Manual:**
-1. Download dari [ffmpeg.org/download.html](https://ffmpeg.org/download.html)
-2. Pilih "Windows builds from gyan.dev"
-3. Download versi `ffmpeg-release-essentials.zip`
-4. Extract ke folder, misal `C:\ffmpeg`
-5. Tambahkan `C:\ffmpeg\bin` ke System PATH:
-   - Buka Settings → System → About → Advanced System Settings
-   - Environment Variables → Path → Edit → New
-   - Tambahkan `C:\ffmpeg\bin`
-   - OK → OK → Restart terminal
 
 </details>
 
-### 3. Install Dependencies Python
+<details>
+<summary>Linux (Ubuntu/Debian)</summary>
 
-Buka terminal di folder project ini, lalu jalankan:
+```bash
+sudo apt update && sudo apt install ffmpeg
+```
 
-```powershell
-cd "D:\Transkrip Python"
+</details>
+
+### 3. Clone & Install Dependencies
+
+```bash
+git clone https://github.com/HedwigKA/audio-transcription-tool.git
+cd audio-transcription-tool
 pip install -r requirements.txt
 ```
 
-> ℹ️ Proses ini akan menginstall **OpenAI Whisper** beserta **PyTorch** (dengan CUDA support jika GPU NVIDIA terdeteksi). Ukuran download bisa mencapai ~2 GB untuk pertama kali.
+### 4. (Optional) Enable GPU Acceleration
 
-### 4. Verifikasi Instalasi
+If you have an NVIDIA GPU, install PyTorch with CUDA for significantly faster transcription:
 
-```powershell
+```bash
+pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu126
+```
+
+> 💡 Check if your GPU is detected:
+> ```bash
+> python transcribe.py --list-models
+> ```
+
+### 5. Verify Installation
+
+```bash
 python transcribe.py --list-models
 ```
 
-Jika berhasil, akan tampil daftar model Whisper dan informasi GPU kamu.
+If successful, you'll see a list of available Whisper models and your device info.
 
 ---
 
-## 🚀 Cara Penggunaan
+## 🚀 Usage
 
-### Penggunaan Dasar
+### Basic Usage
 
-```powershell
-python transcribe.py rekaman_kuliah.m4a
+```bash
+python transcribe.py your_audio_file.m4a
 ```
 
-Ini akan:
-1. Menggunakan model `small` (default, cocok untuk RTX 3050)
-2. Auto-detect bahasa (mendukung campuran Indonesia + English)
-3. Menyimpan hasil di folder `output/` sebagai file `.txt`
+This will:
+1. Use the `small` model (default — good balance of speed & accuracy)
+2. Auto-detect the language
+3. Save the transcript to the `output/` folder as a `.txt` file
 
-### Pilih Model
+### Choose a Model
 
-```powershell
-# Model kecil & cepat (untuk tes atau audio pendek)
-python transcribe.py rekaman.m4a --model tiny
+```bash
+# Fastest, lower accuracy (good for quick tests)
+python transcribe.py audio.m4a --model tiny
 
-# Model balance (default, recommended)
-python transcribe.py rekaman.m4a --model small
+# Balanced speed & accuracy (default, recommended)
+python transcribe.py audio.m4a --model small
 
-# Model presisi tinggi
-python transcribe.py rekaman.m4a --model medium
+# High accuracy
+python transcribe.py audio.m4a --model medium
 
-# Model paling akurat (lambat, jalan di CPU jika VRAM < 10 GB)
-python transcribe.py rekaman.m4a --model large-v3
+# Highest accuracy (slowest, may run on CPU if GPU VRAM < 10 GB)
+python transcribe.py audio.m4a --model large-v3
 ```
 
-### Tentukan Bahasa
+### Specify Language
 
-```powershell
-# Paksa bahasa Indonesia
-python transcribe.py rekaman.m4a --language id
+```bash
+# Force Indonesian
+python transcribe.py audio.m4a --language id
 
-# Paksa bahasa Inggris
-python transcribe.py rekaman.m4a --language en
+# Force English
+python transcribe.py audio.m4a --language en
 
-# Auto-detect (default, recommended untuk dosen bilingual)
-python transcribe.py rekaman.m4a
+# Auto-detect (default, recommended for multilingual audio)
+python transcribe.py audio.m4a
 ```
 
-### Pilih Format Output
+> 💡 Whisper supports 90+ languages. See the full list [here](https://github.com/openai/whisper#available-models-and-languages).
 
-```powershell
-# Hanya TXT (default)
-python transcribe.py rekaman.m4a --format txt
+### Choose Output Format
 
-# Hanya SRT (subtitle)
-python transcribe.py rekaman.m4a --format srt
+```bash
+# Text only (default)
+python transcribe.py audio.m4a --format txt
 
-# Keduanya
-python transcribe.py rekaman.m4a --format txt srt
+# Subtitle only
+python transcribe.py audio.m4a --format srt
+
+# Both
+python transcribe.py audio.m4a --format txt srt
 ```
 
-### Tentukan Folder Output
+### Custom Output Directory
 
-```powershell
-python transcribe.py rekaman.m4a --output D:\Hasil_Transkrip
+```bash
+python transcribe.py audio.m4a --output /path/to/output
 ```
 
-### Kombinasi Lengkap
+### Full Example
 
-```powershell
-python transcribe.py "D:\Rekaman\Kuliah ML Week 3.m4a" --model medium --language id --format txt srt --output D:\Transkrip
+```bash
+python transcribe.py "Meeting Recording.m4a" --model medium --language en --format txt srt --output ./transcripts
 ```
 
-### Shortcut (Flag Pendek)
+### Short Flags
 
-```powershell
-python transcribe.py rekaman.m4a -m medium -l id -f txt srt -o D:\Transkrip
+```bash
+python transcribe.py audio.m4a -m medium -l en -f txt srt -o ./transcripts
 ```
 
 ---
 
-## 📊 Perbandingan Model
+## 📊 Model Comparison
 
-| Model | Ukuran | VRAM | Estimasi Waktu (audio 2 jam) | Akurasi | RTX 3050 (4GB) |
+| Model | Size | VRAM | Speed (2h audio) | Accuracy | Notes |
 |---|---|---|---|---|---|
-| `tiny` | ~75 MB | ~1 GB | ~5-10 menit | ⭐⭐ | ✅ Lancar |
-| `base` | ~145 MB | ~1 GB | ~10-15 menit | ⭐⭐⭐ | ✅ Lancar |
-| `small` | ~470 MB | ~2 GB | ~15-30 menit | ⭐⭐⭐⭐ | ✅ Lancar (**Recommended**) |
-| `medium` | ~1.5 GB | ~5 GB | ~30-60 menit | ⭐⭐⭐⭐⭐ | ⚠️ Mepet, mungkin fallback CPU |
-| `large-v3` | ~3 GB | ~10 GB | ~2-4 jam | ⭐⭐⭐⭐⭐+ | ❌ Jalan di CPU |
+| `tiny` | ~75 MB | ~1 GB | ~5-10 min | ⭐⭐ | Best for quick tests |
+| `base` | ~145 MB | ~1 GB | ~10-15 min | ⭐⭐⭐ | Good for clear audio |
+| `small` | ~470 MB | ~2 GB | ~15-30 min | ⭐⭐⭐⭐ | **Recommended** for most users |
+| `medium` | ~1.5 GB | ~5 GB | ~30-60 min | ⭐⭐⭐⭐⭐ | Great accuracy, needs more VRAM |
+| `large-v3` | ~3 GB | ~10 GB | ~2-4 hrs | ⭐⭐⭐⭐⭐+ | Best accuracy, needs powerful GPU |
 
-> 💡 **Tip:** Untuk penggunaan sehari-hari, gunakan `small`. Untuk rekaman ujian/penting, coba `medium`.
+> ⏱️ Speed estimates assume GPU acceleration. CPU-only processing will be significantly slower.
 
 ---
 
-## 📂 Contoh Hasil Output
+## 📂 Output Examples
 
-### File `.txt`
+### `.txt` Output
 
 ```
 ════════════════════════════════════════════════════════════
@@ -194,111 +219,104 @@ python transcribe.py rekaman.m4a -m medium -l id -f txt srt -o D:\Transkrip
   Jumlah Kata   : 12,450 kata
   Estimasi Baca : ~25 menit
   Model         : small
-  Bahasa        : Indonesian (auto-detected)
+  Bahasa        : English (auto-detected)
   Device        : CUDA
   Waktu Proses  : 00:22:15
 ════════════════════════════════════════════════════════════
 
-[00:00:15] Baik, selamat pagi semuanya. Hari ini kita akan
-membahas tentang konsep dasar machine learning.
+[00:00:15] Welcome everyone. Today we're going to discuss
+the fundamentals of machine learning.
 
-[00:02:30] Machine learning itu pada dasarnya adalah cabang
-dari artificial intelligence yang fokus pada...
+[00:02:30] Machine learning is essentially a branch of
+artificial intelligence that focuses on...
 
 [00:05:12] So the key concept here is supervised learning,
 where we have labeled training data...
-
-[00:05:45] Nah, kalau di Python kita bisa pakai library
-scikit-learn untuk implementasinya.
 ```
 
-### File `.srt`
+### `.srt` Output
 
 ```
 1
 00:00:15,000 --> 00:00:45,200
-Baik, selamat pagi semuanya. Hari ini kita akan membahas
-tentang konsep dasar machine learning.
+Welcome everyone. Today we're going to discuss
+the fundamentals of machine learning.
 
 2
 00:02:30,000 --> 00:03:10,500
-Machine learning itu pada dasarnya adalah cabang dari
-artificial intelligence yang fokus pada...
+Machine learning is essentially a branch of
+artificial intelligence that focuses on...
 ```
 
-> 💡 **Tip:** File `.srt` bisa langsung digunakan sebagai subtitle di video player seperti VLC!
+> 💡 `.srt` files can be used as subtitles in media players like VLC, PotPlayer, or MPV!
 
 ---
 
 ## ❓ Troubleshooting
 
-### "FFmpeg not found"
+### FFmpeg not found
 
 ```
 ❌ FFmpeg tidak ditemukan!
 ```
 
-**Solusi:**
-1. Install FFmpeg: `winget install Gyan.FFmpeg`
-2. Tutup dan buka ulang terminal
-3. Cek: `ffmpeg -version`
+**Solution:** Install FFmpeg (see [Installation](#2-install-ffmpeg)) and restart your terminal.
 
-### "CUDA not available" (padahal punya GPU NVIDIA)
+### CUDA not available (with NVIDIA GPU)
 
-**Solusi:**
-1. Pastikan driver NVIDIA terbaru: [nvidia.com/drivers](https://www.nvidia.com/drivers)
-2. Reinstall PyTorch dengan CUDA:
-   ```powershell
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+**Solution:**
+1. Update your NVIDIA drivers: [nvidia.com/drivers](https://www.nvidia.com/drivers)
+2. Reinstall PyTorch with CUDA:
+   ```bash
+   pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu126
    ```
 
-### "Out of memory" saat transkripsi
+### Out of memory during transcription
 
-**Solusi:**
-- Gunakan model yang lebih kecil: `--model small` atau `--model base`
-- Tool akan otomatis fallback ke CPU jika GPU kehabisan VRAM
+**Solution:** Use a smaller model: `--model small` or `--model base`. The tool will also automatically fall back to CPU if GPU runs out of VRAM.
 
-### Hasil transkripsi kurang akurat
+### Inaccurate transcription results
 
-**Solusi:**
-1. Gunakan model lebih besar: `--model medium` atau `--model large-v3`
-2. Tentukan bahasa: `--language id` (jika mayoritas Indonesia)
-3. Pastikan kualitas audio cukup jelas (minim noise)
+**Solution:**
+1. Use a larger model: `--model medium` or `--model large-v3`
+2. Specify the language: `--language en` (if mostly English)
+3. Ensure the audio quality is clear with minimal background noise
 
-### Proses terlalu lama
+### Processing takes too long
 
-**Solusi:**
-- Gunakan model lebih kecil: `--model tiny` atau `--model base`
-- Pastikan GPU CUDA terdeteksi (cek dengan `python transcribe.py --list-models`)
+**Solution:**
+- Use a smaller model: `--model tiny` or `--model base`
+- Make sure GPU CUDA is detected: `python transcribe.py --list-models`
 
 ---
 
-## 📁 Struktur Project
+## 📁 Project Structure
 
 ```
-Transkrip Python/
-├── transcribe.py          # CLI entry point (jalankan ini)
+audio-transcription-tool/
+├── transcribe.py          # CLI entry point (run this)
 ├── transcriber/
 │   ├── __init__.py        # Package init
-│   ├── core.py            # Logic transkripsi Whisper
-│   ├── formatter.py       # Format output (TXT, SRT)
+│   ├── core.py            # Whisper transcription logic
+│   ├── formatter.py       # Output formatting (TXT, SRT)
 │   └── utils.py           # Helper functions
-├── output/                # Hasil transkrip disimpan di sini
+├── output/                # Transcription results saved here
 ├── requirements.txt       # Python dependencies
-└── README.md              # File ini
+├── .gitignore
+└── README.md              # This file
 ```
 
 ---
 
-## 🛠️ Teknologi
+## 🛠️ Built With
 
-- **[OpenAI Whisper](https://github.com/openai/whisper)** — Model speech-to-text open-source
-- **[PyTorch](https://pytorch.org/)** — Framework deep learning (backend Whisper)
+- **[OpenAI Whisper](https://github.com/openai/whisper)** — Open-source speech-to-text model
+- **[PyTorch](https://pytorch.org/)** — Deep learning framework (Whisper backend)
 - **[FFmpeg](https://ffmpeg.org/)** — Audio/video processing
 - **Python 3.8+**
 
 ---
 
-## 📄 Lisensi
+## 📄 License
 
-Tool ini dibuat untuk keperluan pribadi/belajar. OpenAI Whisper dilisensikan di bawah MIT License.
+This project is for personal and educational use. OpenAI Whisper is licensed under the [MIT License](https://github.com/openai/whisper/blob/main/LICENSE).
