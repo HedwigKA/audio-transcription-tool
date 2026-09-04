@@ -234,6 +234,21 @@ python transcribe.py audio.m4a --topics
 > GEMINI_API_KEY=your_api_key_here
 > ```
 
+### Post-Processing Existing Transcripts (`reformat.py`)
+
+If you already transcribed an audio file and have a `.srt` file, you can apply paragraph mode or AI topic segmentation **without transcribing again** (saves time!):
+
+```bash
+# Reformat existing SRT into paragraph TXT
+python reformat.py "transcripts/my_lecture.srt"
+
+# Reformat + AI Topic Segmentation (using existing SRT)
+python reformat.py "transcripts/my_lecture.srt" --topics
+
+# Adjust gap threshold
+python reformat.py "transcripts/my_lecture.srt" --gap 2.0 --topics
+```
+
 ---
 
 ## 📊 Model Comparison
