@@ -234,7 +234,7 @@ def main():
     segments = parse_srt(srt_path)
     
     if not segments:
-        print(f"❌ Tidak ada segmen yang ditemukan di file SRT")
+        print(f"❌ Tidak ada segmen yang ditemukan di file Audio")
         sys.exit(1)
     
     duration = segments[-1]["end"] if segments else 0
